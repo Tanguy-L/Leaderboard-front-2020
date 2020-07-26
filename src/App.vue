@@ -1,44 +1,18 @@
 <template>
-    <v-app id="app">
-    <v-navigation-drawer
-      v-model="drawer"
-      app
-    >
-      <v-list dense>
-        <v-list-item link>
-          <v-list-item-action>
-            <v-icon>mdi-home</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>Home</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-        <v-list-item link>
-          <v-list-item-action>
-            <v-icon>mdi-email</v-icon>
-          </v-list-item-action>
-          <v-list-item-content>
-            <v-list-item-title>Contact</v-list-item-title>
-          </v-list-item-content>
-        </v-list-item>
-      </v-list>
-    </v-navigation-drawer>
-
-    <v-app-bar
-      app
-      color="indigo darken-3"
-      dark
-    >
-      <v-app-bar-nav-icon @click.stop="drawer = !drawer"></v-app-bar-nav-icon>
-      <v-toolbar-title class="text-h3" style="font-family:'Staatliches' !important;">PLG LAN 2020</v-toolbar-title>
-
+  <v-app id="app">
+    <v-app-bar app color="indigo darken-3" dark>
+      <v-toolbar-title class="text-h3" style="font-family:'Staatliches' !important;"
+        >PLG LAN 2020</v-toolbar-title
+      >
     </v-app-bar>
 
     <v-main>
-      <v-container
-        class="fill-height container-app align-start"
-        fluid
-      >
+      <v-container class="fill-height container-app align-start" fluid>
+        <v-alert v-if="errors.length" type="error">
+          <div v-for="(error, index) of errors" :key="index">
+            <p>{{ error }}</p>
+          </div>
+        </v-alert>
         <router-view></router-view>
       </v-container>
     </v-main>
@@ -49,8 +23,8 @@
 export default {
   data() {
     return {
-      drawer: null
-    }
+      errors: [],
+    };
   },
 };
 </script>
@@ -62,7 +36,7 @@ export default {
   -moz-osx-font-smoothing: grayscale;
   text-align: center;
   color: #2c3e50;
-  background-image: "../public/img/index.jpg";
+  background-image: '../public/img/index.jpg';
 }
 .block-container-header {
   width: 50%;
