@@ -1,25 +1,25 @@
 <template>
   <div>
-    <h1 class="text-h3" style="font-family:'Spartan' !important;">Podium</h1>
+    <h2 class="text-h3" style="font-family:'Spartan' !important;">Podium</h2>
     <v-col class="d-flex align-end" cols="2" offset="5">
       <div class="d-flex flex-column flex-grow-1">
         <p>Team 2</p>
-        <div class="pod-2 podium elevation-3">
+        <div class="pod-2 podium elevation-3 blue darken-3 white--text">
           <h4>2</h4>
         </div>
       </div>
 
       <div class="d-flex flex-column mx-2 flex-grow-1">
         <p>Team 1</p>
-        <div class="pod-1 podium elevation-3">
+        <div class="pod-1 podium elevation-3 yellow darken-3 black--text">
           <h4>1</h4>
-          <v-icon color="yellow-darken-3">mdi-trophy-variant-outline</v-icon>
+          <v-icon large color="black">mdi-trophy-variant-outline</v-icon>
         </div>
       </div>
 
       <div class="d-flex flex-column flex-grow-1">
         <p>Team 3</p>
-        <div class="pod-3 podium elevation-3">
+        <div class="pod-3 podium elevation-3 red darken-3 white--text">
           <h4>3</h4>
         </div>
       </div>

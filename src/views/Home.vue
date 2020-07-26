@@ -5,10 +5,10 @@
     </v-col>
     <v-row>
       <v-col cols="10" offset="1">
+        <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Qui qu'a perdu ?</h2>
         <TableTournament :tournamentData="teamsScoreByGame" :tournamentHeaders="tournamentHeaders" />
       </v-col>
     </v-row>
-
     <v-col cols="12">
       <h2>Les matchs</h2>
     </v-col>

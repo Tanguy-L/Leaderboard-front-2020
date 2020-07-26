@@ -20,9 +20,9 @@
         </tr>
       </thead>
     </template>
-    <template v-slot:top>
+    <!--    <template v-slot:top>
       <h3 style="font-family: 'Spartan' !important;" class="text-h4">Qui qu'a perdu ?</h3>
-    </template>
+    </template>-->
     <template v-slot:item.calories="{ item }">
       <v-chip :color="getColor(item.calories)" dark>{{ item.calories }}</v-chip>
     </template>
