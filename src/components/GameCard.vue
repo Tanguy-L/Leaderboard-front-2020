@@ -1,29 +1,27 @@
 <template>
   <v-card class="game-card--wrapper">
     <v-img
-      :src="
-        'https://lh3.googleusercontent.com/proxy/FWeekARtrG23jK8RsaC_NRtt234N7IAH7Q3RwyQ51sMETSvtOHqCSn3WKo3rpQ8t8nNA43_gkMhcpZ_qKeeM3hCO0QjlzJATM0VMnlluK80T9L5SwrwZchDl8RVrpTLO'
-      "
+      :src="require(`@/assets/${gameImage}`) || null"
       gradient="to bottom, rgba(0,0,0,.3), rgba(0,0,0,.8)"
       class="align-end white--text font-title"
       height="200px"
       v-if="!edit.isEdited"
     >
       <!-- LINE SCORE -->
-      <v-row class="text-h4 font-weight-black">
-        <v-col cols="5">{{ match.result[0].score }}</v-col>
+      <v-row class="text-h4 font-weight-black" v-if="!!match.score">
+        <v-col cols="5">{{ match.score[0].score }}</v-col>
         <v-col cols="2"></v-col>
-        <v-col cols="5">{{ match.result[1].score }}</v-col>
+        <v-col cols="5">{{ match.score[1].score }}</v-col>
       </v-row>
 
       <!-- LINE TEAMS -->
-      <v-row class="text-h5 mb-3">
-        <v-col cols="5" :style="{ color: temp_listTeams[match.result[0].team].color }">
-          {{ temp_listTeams[match.result[0].team].name }}
+      <v-row class="text-h5 mb-3" v-if="!!match.score">
+        <v-col cols="5" :style="{ color: teams[match.score[0].team].color }">
+          {{ teams[match.score[0].team].name }}
         </v-col>
         <v-col cols="2" class="text-h5">VS</v-col>
-        <v-col cols="5" :style="{ color: temp_listTeams[match.result[1].team].color }">
-          {{ temp_listTeams[match.result[1].team].name }}
+        <v-col cols="5" :style="{ color: teams[match.score[1].team].color }">
+          {{ teams[match.score[1].team].name }}
         </v-col>
       </v-row>
     </v-img>
@@ -69,7 +67,7 @@
       <v-row>
         <v-col cols="7">
           <v-autocomplete
-            :items="temp_listGames"
+            :items="mappedGames"
             label="Game"
             v-model="form_matchGame"
           ></v-autocomplete>
@@ -102,10 +100,10 @@
       <v-card-text class="ml-4">
         <v-list-item v-if="!edit.isEdited">
           <v-list-item-content>
-            <v-list-item-title>Commence à: {{ match.start_at }}</v-list-item-title>
+            <v-list-item-title>Commence à: {{ formatedDate(match.start_at) }}</v-list-item-title>
             <v-list-item-subtitle>
-              W: {{ temp_listRules[match.rule].win }} | L: {{ temp_listRules[match.rule].lost }} | Eq:
-              {{ temp_listRules[match.rule].equality }}
+              W: {{ rules[match.rule].win }} | L: {{ rules[match.rule].lost }} | Eq:
+              {{ rules[match.rule].equality }}
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -145,54 +143,28 @@
 
 <script>
 export default {
+  props: {
+    match: {
+      type: Object,
+      required: true,
+    },
+    teams: {
+      type: Array,
+      required: true,
+    },
+    games: {
+      type: Array,
+      required: true,
+    },
+    rules: {
+      type: Array,
+      required: true,
+    },
+  },
   data: () => ({
-    temp_listRules: [
-      {
-        win: 5,
-        lost: 1,
-        equality: 3,
-      },
-      {
-        win: 7,
-        lost: 2,
-        equality: 5,
-      },
-    ],
-    temp_listGames: ['Game_1', 'Game_2', 'Game_3'],
-    temp_listTeams: [
-      {
-        name: 'Team_1',
-        color: '#FF00FF',
-      },
-      {
-        name: 'Team_2',
-        color: '#FFFF00',
-      },
-      {
-        name: 'Team_3',
-        color: '#00FFFF',
-      },
-    ],
     edit: {
       isEdited: false,
       menu: null,
-    },
-    match: {
-      id: 1,
-      start_at: '21:30:00',
-      rule: 1,
-      result: [
-        {
-          team: 0,
-          score: 5,
-          is_winner: true,
-        },
-        {
-          team: 2,
-          score: 1,
-          is_winner: false,
-        },
-      ],
     },
     form_firstTeamName: '',
     form_firstTeamWins: '',
@@ -206,12 +178,13 @@ export default {
   computed: {
     amIAdmin: () => true,
     mappedRules() {
-      return this.temp_listRules.map(
-        rule => `W:${rule.win} / L:${rule.lost} / Eq:${rule.equality}`,
-      );
+      return this.rules.map(rule => `W:${rule.win} / L:${rule.lost} / Eq:${rule.equality}`);
     },
     mappedTeams() {
-      return this.temp_listTeams.map(team => team.name);
+      return this.teams.map(team => team.name);
+    },
+    mappedGames() {
+      return this.games.map(game => game.name);
     },
     hours: () => {
       return [...Array(24).keys()];
@@ -219,13 +192,18 @@ export default {
     minutes: () => {
       return [...Array(60).keys()];
     },
+    gameImage() {
+      return this.games.find(game => game.id === this.match.game).image;
+    },
   },
   methods: {
     editMatch(menu = null) {
-      console.log(menu);
-
       this.edit.isEdited = !!menu;
       this.edit.menu = this.edit.isEdited ? menu : null;
+    },
+    formatedDate(date) {
+      const d = new Date(date);
+      return `${d.getHours()}:${d.getMinutes()}`;
     },
   },
 };
@@ -253,6 +231,5 @@ export default {
   .v-card__text {
     width: auto;
   }
-
 }
 </style>

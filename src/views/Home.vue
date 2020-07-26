@@ -7,14 +7,17 @@
       <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Les matchs joués</h2>
       <v-row v-for="line in linesForCards" :key="line.id">
         <v-col v-for="match in line.matches" :key="match.id" cols="3">
-          <GameCard />
+          <GameCard :match="match" :teams="teams" :games="games" :rules="rules" />
         </v-col>
       </v-row>
     </v-col>
     <v-row>
       <v-col cols="10" offset="1">
         <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Qui qu'a perdu ?</h2>
-        <TableTournament :tournamentData="teamsScoreByGame" :tournamentHeaders="tournamentHeaders" />
+        <TableTournament
+          :tournamentData="teamsScoreByGame"
+          :tournamentHeaders="tournamentHeaders"
+        />
       </v-col>
     </v-row>
   </v-row>
@@ -41,6 +44,7 @@ export default {
       matchs: [],
       teams: [],
       games: [],
+      rules: [],
       matchsResult: [],
     };
   },
@@ -51,20 +55,23 @@ export default {
       const reqMatchs = axios.get(`${api}/matches`);
       const reqTeams = axios.get(`${api}/teams`);
       const reqGames = axios.get(`${api}/games`);
+      const reqRules = axios.get(`${api}/rules`);
       try {
-        const [resMatchs, resTeams, resGames] = await Promise.all([
+        const [resMatchs, resTeams, resGames, resRules] = await Promise.all([
           reqMatchs,
           reqTeams,
           reqGames,
+          reqRules,
         ]);
 
         const teams = resTeams.data;
         const games = resGames.data;
         const matchs = resMatchs.data;
+        const rules = resRules.data;
 
-        const results = matchs.map(async (match) => {
+        const results = matchs.map(async match => {
           const response = await axios.get(`${api}/matches/${match.id}/result`);
-          const game = games.find((gameToFind) => gameToFind.id === match.game);
+          const game = games.find(gameToFind => gameToFind.id === match.game);
           const result = { game: game.id, score: response.data };
           return result;
         });
@@ -73,6 +80,7 @@ export default {
           matchs,
           teams,
           games,
+          rules,
           matchsResult: await Promise.all(results),
         };
       } catch (error) {
@@ -90,10 +98,10 @@ export default {
         return newMatch;
       });
 
-      const matchesResultsWithWinner = matchsWithResult.filter((match) => {
+      const matchesResultsWithWinner = matchsWithResult.filter(match => {
         const { result } = match;
         if (result.score && result.score !== '') {
-          const check = result.score.some((e) => e.is_winner);
+          const check = result.score.some(e => e.is_winner);
           if (check) {
             return true;
           }
@@ -113,7 +121,7 @@ export default {
         return newMatch;
       });
 
-      const matchesResultsWitoutWinner = matchsWithResult.filter((match) => {
+      const matchesResultsWitoutWinner = matchsWithResult.filter(match => {
         const { result } = match;
         if (result.score === '') {
           return true;
@@ -148,15 +156,13 @@ export default {
     teamsScoreByGame() {
       const { teams, games, matchsResult } = this;
 
-      const test = teams.map((team) => {
-        const test2 = games.map((game) => {
-          const matchForThisGame = matchsResult.filter(
-            (e) => e.game === game.id,
-          );
+      const test = teams.map(team => {
+        const test2 = games.map(game => {
+          const matchForThisGame = matchsResult.filter(e => e.game === game.id);
 
-          const filteredByTeam = matchForThisGame.filter((e) => {
+          const filteredByTeam = matchForThisGame.filter(e => {
             if (e.score && e.score !== '') {
-              const find = e.score.some((score) => score.team === team.id);
+              const find = e.score.some(score => score.team === team.id);
               if (find) {
                 return true;
               }
@@ -166,10 +172,8 @@ export default {
 
           let scoreTeam = 0;
 
-          filteredByTeam.forEach((results) => {
-            const score = results.score.find(
-              (result) => result.team === team.id,
-            );
+          filteredByTeam.forEach(results => {
+            const score = results.score.find(result => result.team === team.id);
             scoreTeam += score.score;
           });
 
@@ -183,7 +187,7 @@ export default {
           team: team.name,
         };
 
-        test2.forEach((game) => {
+        test2.forEach(game => {
           result[game.key] = game.value;
         });
 
@@ -194,7 +198,7 @@ export default {
     },
     tournamentHeaders() {
       const { games } = this;
-      const matchsParsed = games.map((game) => {
+      const matchsParsed = games.map(game => {
         return {
           text: game.name,
           value: game.name,
@@ -214,10 +218,11 @@ export default {
     },
   },
   mounted() {
-    this.fetchData().then((response) => {
+    this.fetchData().then(response => {
       this.teams = response.teams;
       this.games = response.games;
       this.matchs = response.matchs;
+      this.rules = response.rules;
       this.matchsResult = response.matchsResult;
     });
   },
