@@ -7,7 +7,7 @@
       <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Les matchs joués</h2>
       <v-row v-for="line in linesForCards" :key="line.id">
         <v-col v-for="match in line.matches" :key="match.id" cols="3">
-          <GameCard />
+          <GameCard :match="match" :teams="teams" :games="games" :rules="rules" />
         </v-col>
       </v-row>
     </v-col>
@@ -41,6 +41,7 @@ export default {
       matchs: [],
       teams: [],
       games: [],
+      rules: [],
       matchsResult: [],
     };
   },
@@ -51,16 +52,19 @@ export default {
       const reqMatchs = axios.get(`${api}/matches`);
       const reqTeams = axios.get(`${api}/teams`);
       const reqGames = axios.get(`${api}/games`);
+      const reqRules = axios.get(`${api}/rules`);
       try {
-        const [resMatchs, resTeams, resGames] = await Promise.all([
+        const [resMatchs, resTeams, resGames, resRules] = await Promise.all([
           reqMatchs,
           reqTeams,
           reqGames,
+          reqRules,
         ]);
 
         const teams = resTeams.data;
         const games = resGames.data;
         const matchs = resMatchs.data;
+        const rules = resRules.data;
 
         const results = matchs.map(async (match) => {
           const response = await axios.get(`${api}/matches/${match.id}/result`);
@@ -73,6 +77,7 @@ export default {
           matchs,
           teams,
           games,
+          rules,
           matchsResult: await Promise.all(results),
         };
       } catch (error) {
@@ -131,7 +136,7 @@ export default {
 
       const { length } = nonPlayedMatches;
 
-      const chunk = 6;
+      const chunk = 4;
       let i;
       let j;
       let id = 0;
@@ -218,6 +223,7 @@ export default {
       this.teams = response.teams;
       this.games = response.games;
       this.matchs = response.matchs;
+      this.rules = response.rules;
       this.matchsResult = response.matchsResult;
     });
   },
