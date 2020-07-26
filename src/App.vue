@@ -1,9 +1,12 @@
 <template>
   <v-app id="app">
-    <v-app-bar app color="indigo darken-3" dark>
-      <v-toolbar-title class="text-h3" style="font-family:'Staatliches' !important;"
-        >PLG LAN 2020</v-toolbar-title
-      >
+    <v-app-bar app color="light-blue accent-2" dark>
+      <v-row>
+        <v-col cols="5">
+          <v-img height="55px" width="240px" src="../public/img/plgCamion.png" />
+        </v-col>
+      </v-row>
+      <v-toolbar-title class="text-h3" style="font-family:'Staatliches' !important;">PLG LAN 2020</v-toolbar-title>
     </v-app-bar>
 
     <v-main>
