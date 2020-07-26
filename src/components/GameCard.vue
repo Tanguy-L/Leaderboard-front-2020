@@ -207,8 +207,6 @@ export default {
   },
   methods: {
     editMatch(menu = null) {
-      console.log(menu);
-
       this.edit.isEdited = !!menu;
       this.edit.menu = this.edit.isEdited ? menu : null;
     },

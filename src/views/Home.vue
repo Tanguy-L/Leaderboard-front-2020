@@ -6,7 +6,7 @@
     <v-col cols="12">
       <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Les matchs joués</h2>
       <v-row v-for="line in linesForCards" :key="line.id">
-        <v-col v-for="match in line.matches" :key="match.id" cols="2">
+        <v-col v-for="match in line.matches" :key="match.id" cols="3">
           <GameCard />
         </v-col>
       </v-row>
