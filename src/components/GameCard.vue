@@ -5,7 +5,7 @@
       gradient="to bottom, rgba(0,0,0,.5), rgba(0,0,0,0.9)"
       class="align-end white--text font-title"
       height="200px"
-      v-if="!edit.isEdited"
+      v-if="edit.menu == 'delete' || !edit.isEdited"
     >
       <!-- LINE SCORE -->
       <v-row class="text-h2 font-weight-black" v-if="!!match.score">
@@ -152,7 +152,7 @@
             <v-icon @click.native="editMatch('settings')">mdi-cog</v-icon>
           </v-btn>
           <v-btn color="error" icon>
-            <v-icon>mdi-delete</v-icon>
+            <v-icon @click.native="editMatch('delete')">mdi-delete</v-icon>
           </v-btn>
         </div>
         <div class="d-flex justify-end" v-else>
