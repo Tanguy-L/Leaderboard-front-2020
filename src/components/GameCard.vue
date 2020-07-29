@@ -2,13 +2,13 @@
   <v-card class="game-card--wrapper">
     <v-img
       :src="require(`@/assets/${gameImage}`) || null"
-      gradient="to bottom, rgba(0,0,0,.3), rgba(0,0,0,.8)"
+      gradient="to bottom, rgba(0,0,0,.5), rgba(0,0,0,0.9)"
       class="align-end white--text font-title"
       height="200px"
       v-if="!edit.isEdited"
     >
       <!-- LINE SCORE -->
-      <v-row class="text-h4 font-weight-black" v-if="!!match.score">
+      <v-row class="text-h2 font-weight-black" v-if="!!match.score">
         <v-col cols="5">{{ match.score[0].score }}</v-col>
         <v-col cols="2"></v-col>
         <v-col cols="5">{{ match.score[1].score }}</v-col>
@@ -16,13 +16,15 @@
 
       <!-- LINE TEAMS -->
       <v-row class="text-h5 mb-3" v-if="!!match.score">
-        <v-col cols="5" :style="{ color: teams[match.score[0].team].color }">
-          {{ teams[match.score[0].team].name }}
-        </v-col>
+        <v-col
+          cols="5"
+          :style="{ color: getTeamData(match.score[0].team).color }"
+        >{{ getTeamData(match.score[0].team).name }}</v-col>
         <v-col cols="2" class="text-h5">VS</v-col>
-        <v-col cols="5" :style="{ color: teams[match.score[1].team].color }">
-          {{ teams[match.score[1].team].name }}
-        </v-col>
+        <v-col
+          cols="5"
+          :style="{ color: getTeamData(match.score[1].team).color }"
+        >{{ getTeamData(match.score[1].team).name }}</v-col>
       </v-row>
     </v-img>
 
@@ -35,25 +37,46 @@
       <v-row>
         <v-col cols="7">
           <v-autocomplete
-            :items="mappedTeams"
+            :items="teams"
+            item-text="name"
+            item-value="id"
             label="Equipe 1"
-            v-model="form_firstTeamName"
+            v-model="form_firstTeam"
           ></v-autocomplete>
         </v-col>
         <v-col cols="4">
-          <v-checkbox v-model="form_firstTeamWins" label="A gagné"></v-checkbox>
+          <v-checkbox
+            v-model="form_firstTeamWins"
+            input-value="form_firstTeamWins"
+            label="A  gagné"
+          ></v-checkbox>
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="7">
           <v-autocomplete
-            :items="mappedTeams"
+            :items="teams"
+            item-text="name"
+            item-value="id"
             label="Equipe 2"
-            v-model="form_secondTeamName"
+            v-model="form_secondTeam"
           ></v-autocomplete>
         </v-col>
         <v-col cols="4">
-          <v-checkbox v-model="form_secondTeamWins" label="A gagné"></v-checkbox>
+          <v-checkbox
+            v-model="form_secondTeamWins"
+            input-value="form_secondTeamWins"
+            label="A gagné"
+          ></v-checkbox>
+        </v-col>
+      </v-row>
+      <v-row>
+        <v-col cols="12">
+          <v-checkbox
+            v-model="form_matchEnded"
+            input-value="form_matchEnded"
+            label="Le match est fini"
+          ></v-checkbox>
         </v-col>
       </v-row>
     </v-form>
@@ -67,7 +90,9 @@
       <v-row>
         <v-col cols="7">
           <v-autocomplete
-            :items="mappedGames"
+            :items="games"
+            item-text="name"
+            item-value="id"
             label="Game"
             v-model="form_matchGame"
           ></v-autocomplete>
@@ -77,6 +102,8 @@
         <v-col cols="7">
           <v-autocomplete
             :items="mappedRules"
+            item-text="name"
+            item-value="id"
             label="Rule"
             v-model="form_matchRule"
           ></v-autocomplete>
@@ -132,7 +159,7 @@
           <v-btn color="error" icon @click.native="editMatch()">
             <v-icon>mdi-close-thick</v-icon>
           </v-btn>
-          <v-btn color="success" icon>
+          <v-btn color="success" icon @click.native="sendForm()">
             <v-icon>mdi-check-bold</v-icon>
           </v-btn>
         </div>
@@ -142,6 +169,8 @@
 </template>
 
 <script>
+import axios from 'axios';
+
 export default {
   props: {
     match: {
@@ -166,10 +195,11 @@ export default {
       isEdited: false,
       menu: null,
     },
-    form_firstTeamName: '',
+    form_firstTeam: '',
     form_firstTeamWins: '',
-    form_secondTeamName: '',
+    form_secondTeam: '',
     form_secondTeamWins: '',
+    form_matchEnded: '',
     form_matchGame: '',
     form_matchRule: '',
     form_matchStartHour: '',
@@ -178,13 +208,10 @@ export default {
   computed: {
     amIAdmin: () => true,
     mappedRules() {
-      return this.rules.map(rule => `W:${rule.win} / L:${rule.lost} / Eq:${rule.equality}`);
-    },
-    mappedTeams() {
-      return this.teams.map(team => team.name);
-    },
-    mappedGames() {
-      return this.games.map(game => game.name);
+      return this.rules.map(rule => ({
+        name: `W:${rule.win} / L:${rule.lost} / Eq:${rule.equality}`,
+        ...rule,
+      }));
     },
     hours: () => {
       return [...Array(24).keys()];
@@ -205,6 +232,71 @@ export default {
       const d = new Date(date);
       return `${d.getHours()}:${d.getMinutes()}`;
     },
+    getTeamData(teamId) {
+      return this.teams.find(team => team.id === teamId);
+    },
+    sendForm() {
+      switch (this.edit.menu) {
+        case 'participants':
+          this.sendParticipantsForm();
+          break;
+        case 'settings':
+          // sendSettingsForm();
+          break;
+        case 'delete':
+          // sendDeleteForm();
+          break;
+        default:
+          break;
+      }
+    },
+    async sendParticipantsForm() {
+      const api = await 'http://localhost:3000';
+      const { match } = this;
+
+      const { data: participants } = await axios.get(
+        `${api}/matches/${match.id}/participants`,
+      );
+
+      participants.forEach(async participant => {
+        await axios.delete(
+          `${api}/matches/${match.id}/participants/${participant.team_id}`,
+        );
+      });
+
+      const teamsBody = { teams: [this.form_firstTeam, this.form_secondTeam] };
+      const winnersBody = { winners: [] };
+      if (this.form_firstTeamWins)
+        winnersBody.winners.push(this.form_firstTeam);
+      if (this.form_secondTeamWins)
+        winnersBody.winners.push(this.form_secondTeam);
+
+      await axios.post(`${api}/matches/${match.id}/participants`, teamsBody);
+      await axios.post(`${api}/matches/${match.id}/result`, winnersBody);
+      await axios.put(`${api}/matches/${match.id}`, {
+        start_at: match.start_at,
+        end_at: this.form_matchEnded ? Date.now() : null,
+        game: match.game,
+        rule: match.rule,
+      });
+    },
+  },
+  mounted() {
+    const { score, start_at: startAt, end_at: endAt, game, rule } = this.match;
+    if (!!score && !!score[0] && !!score[0].team) {
+      this.form_firstTeam = score[0].team;
+      this.form_firstTeamWins = score[0].is_winner;
+    }
+    if (!!score && !!score[1] && !!score[1].team) {
+      this.form_secondTeam = score[1].team;
+      this.form_secondTeamWins = score[1].is_winner;
+    }
+    const startDate = new Date(startAt);
+    this.form_matchStartHour = startDate.getHours();
+    this.form_matchStartMinute = startDate.getMinutes();
+    this.form_matchEnded = endAt;
+    this.form_matchGame = game;
+    this.form_matchRule = rule;
   },
 };
 </script>
