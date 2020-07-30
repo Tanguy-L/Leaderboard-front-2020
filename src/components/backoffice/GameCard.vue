@@ -1,7 +1,7 @@
 <template>
   <v-card>
     <v-img
-      :src="require(`@/assets/${game.image}`) || null"
+      :src="require(`@/assets/${game.image}`)"
       gradient="to bottom, rgba(0,0,0,.5), rgba(0,0,0,0.9)"
       class="align-end white--text font-title"
       height="125px"
@@ -121,6 +121,10 @@ export default {
       updateSnack: 'updateSnackBar',
     }),
   },
+  mounted() {
+    this.form_gameName = this.game.name;
+    this.form_gameImage = this.game.image;
+  }
 };
 </script>
 

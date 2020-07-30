@@ -1,40 +1,21 @@
 <template>
-  <v-card class="d-flex pa-2">
-    <v-row>
-      <v-col class="d-flex">
-        <span class="mr-3">Win:</span>
-        <v-text-field
-          :rules="dumbRules"
-          dense
-          v-model="form_ruleWin"
-          required
-          v-if="edit.menu == 'settings'"
-        ></v-text-field>
-        <span v-else>{{ rule.win }}</span>
-      </v-col>
-      <v-col class="d-flex">
-        <span class="mr-3">Lost:</span>
-        <v-text-field
-          :rules="dumbRules"
-          dense
-          v-model="form_ruleLost"
-          required
-          v-if="edit.menu == 'settings'"
-        ></v-text-field>
-        <span v-else>{{ rule.lost }}</span>
-      </v-col>
-      <v-col class="d-flex">
-        <span class="mr-3">Equality:</span>
-        <v-text-field
-          :rules="dumbRules"
-          dense
-          v-model="form_ruleEquality"
-          required
-          v-if="edit.menu == 'settings'"
-        ></v-text-field>
-        <span v-else>{{ rule.equality }}</span>
-      </v-col>
+  <v-card>
+    <v-row
+      class="align-end justify-center white--text font-title"
+      :style="{ backgroundColor: team.color, height: '125px' }"
+      v-if="edit.menu == 'delete' || !edit.isEdited"
+    >
+      <h3>{{ team.name }}</h3>
     </v-row>
+    <v-form
+      style="border-bottom: 1px solid #757575"
+      class="pa-4"
+      v-else
+    >
+      <v-text-field :rules="dumbRules" dense v-model="form_teamName" label="Nom" required></v-text-field>
+      <v-text-field :rules="dumbRules" dense v-model="form_teamColor" label="Image" required></v-text-field>
+    </v-form>
+
     <v-card-actions class="mr-2">
       <v-spacer></v-spacer>
       <div class="d-flex justify-end" v-if="!edit.isEdited">
@@ -63,7 +44,7 @@ import axios from 'axios';
 
 export default {
   props: {
-    rule: {
+    team: {
       type: Object,
       required: true,
     },
@@ -74,9 +55,8 @@ export default {
         isEdited: false,
         menu: null,
       },
-      form_ruleWin: '',
-      form_ruleLost: '',
-      form_ruleEquality: '',
+      form_teamName: '',
+      form_teamColor: '',
       dumbRules: [v => !!v || 'Ce champs est requis'],
     };
   },
@@ -102,10 +82,9 @@ export default {
     sendSettingsForm() {
       const api = 'http://localhost:3000';
       axios
-        .put(`${api}/rules/${this.rule.id}`, {
-          win: this.form_ruleWin,
-          lost: this.form_ruleLost,
-          equality: this.form_ruleEquality,
+        .put(`${api}/teams/${this.team.id}`, {
+          name: this.form_teamName,
+          color: this.form_teamColor,
         })
         .catch(async err => {
           console.log(err);
@@ -121,7 +100,7 @@ export default {
     },
     sendDeleteForm() {
       const api = 'http://localhost:3000';
-      axios.delete(`${api}/rules/${this.rule.id}`).catch(async err => {
+      axios.delete(`${api}/teams/${this.team.id}`).catch(async err => {
         console.log(err);
         // !!!!!!!!!!!!!!!!!!!!!!!!!!!!!
         // !!!!!!!!!! HELP ME !!!!!!!!!!
@@ -140,9 +119,8 @@ export default {
     }),
   },
   mounted() {
-    this.form_ruleWin = this.rule.win;
-    this.form_ruleLost = this.rule.lost;
-    this.form_ruleEquality = this.rule.equality;
+    this.form_teamName = this.team.name;
+    this.form_teamColor = this.team.color;
   }
 };
 </script>

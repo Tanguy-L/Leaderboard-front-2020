@@ -3,13 +3,22 @@
     <v-row class="back-wrapper grid-layout">
       <div>
         <h3>Games</h3>
-        <v-row class="game-wrapper grid-layout">
+        <v-row class="small-wrapper grid-layout">
           <game-card v-for="game in games" :key="game.id" :game="game" @update="fetchCall" />
+          <add-game-card @update="fetchCall" />
         </v-row>
       </div>
       <div>
         <h3>Rules</h3>
-        <rule-card v-for="rule in rules" :key="rule.id" :rule="rule" @update="fetchCall" />
+        <rule-card v-for="rule in rules" class="mb-3" :key="rule.id" :rule="rule" @update="fetchCall" />
+        <add-rule-card @update="fetchCall" />
+      </div>
+      <div>
+        <h3>Teams</h3>
+        <v-row class="small-wrapper grid-layout">
+          <team-card v-for="team in teams" class="mb-3" :key="team.id" :team="team" @update="fetchCall" />
+          <add-team-card @update="fetchCall" />
+        </v-row>
       </div>
     </v-row>
   </v-col>
@@ -17,13 +26,21 @@
 
 <script>
 import GameCard from '@/components/backoffice/GameCard.vue';
+import AddGameCard from '@/components/backoffice/AddGameCard.vue';
 import RuleCard from '@/components/backoffice/RuleCard.vue';
+import AddRuleCard from '@/components/backoffice/AddRuleCard.vue';
+import TeamCard from '@/components/backoffice/TeamCard.vue';
+import AddTeamCard from '@/components/backoffice/AddTeamCardDeSesMort.vue';
 import axios from 'axios';
 
 export default {
   components: {
     GameCard,
     RuleCard,
+    TeamCard,
+    AddGameCard,
+    AddRuleCard,
+    AddTeamCard
   },
   data() {
     return {
@@ -109,15 +126,17 @@ export default {
 }
 
 .back-wrapper {
-  --min-width: 540px;
+  --min-width: 620px;
+  --grid-gap: 64px;
 }
-.game-wrapper {
+.small-wrapper {
   --min-width: 200px;
+  --grid-gap: 16px;
 }
 
 .grid-layout {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--min-width), 1fr));
-  grid-gap: 16px;
+  grid-gap: var(--grid-gap);
 }
 </style>
