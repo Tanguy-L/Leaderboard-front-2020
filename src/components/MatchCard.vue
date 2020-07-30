@@ -261,12 +261,14 @@ export default {
       const api = await 'http://localhost:3000';
       const { match } = this;
 
-      const reqParticipants = match.participants.map(participant => {
-        return axios.delete(
-          `${api}/matches/${match.id}/participants/${participant.team}`,
-        );
-      });
-      await Promise.all(reqParticipants);
+      if ( match.participants.length > 0) {
+        const reqParticipants = match.participants.map(participant => {
+          return axios.delete(
+            `${api}/matches/${match.id}/participants/${participant.team}`,
+          );
+        });
+        await Promise.all(reqParticipants);
+      }
 
       const teams = [this.form_firstTeam, this.form_secondTeam];
       const winners = [];
@@ -315,12 +317,14 @@ export default {
       const api = 'http://localhost:3000';
       const { match } = this;
       try {
-        const reqParticipants = match.participants.map(participant => {
-          return axios.delete(
-            `${api}/matches/${match.id}/participants/${participant.team}`,
-          );
-        });
-        await Promise.all(reqParticipants);
+        if (match.participants.length > 0) {
+          const reqParticipants = match.participants.map(participant => {
+            return axios.delete(
+              `${api}/matches/${match.id}/participants/${participant.team}`,
+            );
+          });
+          await Promise.all(reqParticipants);
+        }
         await axios.delete(`${api}/matches/${match.id}`);
         await this.confirmUpdate();
       } catch (error) {
