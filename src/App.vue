@@ -6,15 +6,12 @@
           <v-img height="55px" width="240px" src="../public/img/plgCamion.png" />
         </v-col>
       </v-row>
-      <v-toolbar-title class="text-h3" style="font-family:'Staatliches' !important;"
-        >PLG LAN 2020</v-toolbar-title
-      >
+      <v-toolbar-title class="text-h3" style="font-family:'Staatliches' !important;">PLG LAN 2020</v-toolbar-title>
     </v-app-bar>
-
-    <!--  <v-dialog v-model="dialog" max-width="450">
+    <!-- 
+    <v-dialog v-model="dialog" max-width="450">
       <v-card class="px-12">
-        <v-container>
-        </v-container>
+        <v-container></v-container>
       </v-card>
     </v-dialog>-->
 
@@ -42,9 +39,7 @@
               color: '',
             })
           "
-        >
-          Close
-        </v-btn>
+        >Close</v-btn>
       </template>
     </v-snackbar>
 
@@ -55,12 +50,14 @@
       color="light-blue darken-4"
       class="font-weight-medium d-flex justify-space-between align-center px-2 elevation-3"
     >
-      <p class="white--text body-2 ma-0" style="font-family:'Spartan' !important;">
-        Crée par Moustique et Trobibot
-      </p>
-      <p class="white--text body-2 ma-0" style="font-family:'Spartan' !important;">
-        {{ displayUserStatus }}
-      </p>
+      <p
+        class="white--text body-2 ma-0"
+        style="font-family:'Spartan' !important;"
+      >Crée par Moustique et Trobibot</p>
+      <p
+        class="white--text body-2 ma-0"
+        style="font-family:'Spartan' !important;"
+      >{{ displayUserStatus }}</p>
     </v-footer>
   </v-app>
 </template>

@@ -2,7 +2,7 @@
   <v-card class="game-card--wrapper">
     <v-row class="d-flex flex-column justify-center">
       <h3 class="primary--text mt-4" @click="expand = !expand">Ajouter un match</h3>
-      <v-form ref="form" class="pa-2 mt-4 px-6 form-width ma-auto" v-model="valid">
+      <v-form class="pa-2 mt-4 px-6 form-width ma-auto" v-model="valid">
         <v-autocomplete
           :items="mappedRules"
           item-text="name"
@@ -49,11 +49,11 @@ export default {
     matchGame: '',
     matchHour: '',
     matchMinutes: '',
-    dumbRules: [(v) => !!v || v === 0 || 'Ce champs est requis'],
+    dumbRules: [v => !!v || v === 0 || 'Ce champs est requis'],
   }),
   computed: {
     mappedRules() {
-      return this.rules.map((rule) => ({
+      return this.rules.map(rule => ({
         name: `W:${rule.win} / L:${rule.lost} / Eq:${rule.equality}`,
         ...rule,
       }));
@@ -69,16 +69,14 @@ export default {
     async clearForm() {
       this.matchRule = '';
       this.matchGame = '';
-      this.$refs.form.resetValidation();
+      // this.$refs.form.resetValidation();
     },
     async submit() {
       const { matchGame, matchRule } = this;
-      const dt = new Date();
-      dt.setHours(dt.getHours() + 2);
       try {
         await axios.post('http://localhost:3000/matches', {
           start_at: Date.now(),
-          end_at: dt,
+          end_at: null,
           game: matchGame,
           rule: matchRule,
         });
