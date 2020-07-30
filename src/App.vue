@@ -1,28 +1,22 @@
 <template>
   <v-app id="app">
-    <v-app-bar app color="light-blue accent-2 " dark>
+    <v-app-bar v-if="this.$route.name !== 'Connexion'" app color="light-blue accent-2 " dark>
       <v-row>
         <v-col cols="3">
           <v-img height="55px" width="240px" src="../public/img/plgCamion.png" />
         </v-col>
       </v-row>
-      <v-btn class="mr-6" @click.stop="dialog = true" color="primary">Se connecter</v-btn>
-      <v-toolbar-title class="text-h3" style="font-family:'Staatliches' !important;">PLG LAN 2020</v-toolbar-title>
+      <v-toolbar-title class="text-h3" style="font-family:'Staatliches' !important;"
+        >PLG LAN 2020</v-toolbar-title
+      >
     </v-app-bar>
 
-    <v-dialog v-model="dialog" max-width="450">
+    <!--  <v-dialog v-model="dialog" max-width="450">
       <v-card class="px-12">
         <v-container>
-          <v-form ref="form" class="d-flex flex-column" v-model="valid">
-            <v-text-field v-model="user.login" :counter="35" label="Login" required></v-text-field>
-
-            <v-text-field v-model="user.password" :counter="35" label="Mot de passe" required></v-text-field>
-
-            <v-btn class="mt-6" color="success" @click="validate">Valider</v-btn>
-          </v-form>
         </v-container>
       </v-card>
-    </v-dialog>
+    </v-dialog>-->
 
     <v-main class="pb-12">
       <v-container class="fill-height container-app align-start" fluid>
@@ -35,8 +29,23 @@
       </v-container>
     </v-main>
 
-    <v-snackbar v-model="snackbar" :timeout="timeout">
-      <p>{{ text }}</p>
+    <v-snackbar v-model="snack" :color="snackbar.snackColor" :timeout="timeout">
+      {{ snackbar.snackText }}
+      <template v-slot:action="{ attrs }">
+        <v-btn
+          text
+          v-bind="attrs"
+          @click="
+            updateSnackBar({
+              snackbar: value,
+              text: '',
+              color: '',
+            })
+          "
+        >
+          Close
+        </v-btn>
+      </template>
     </v-snackbar>
 
     <v-footer
@@ -46,84 +55,48 @@
       color="light-blue darken-4"
       class="font-weight-medium d-flex justify-space-between align-center px-2 elevation-3"
     >
-      <p
-        class="white--text body-2 ma-0"
-        style="font-family:'Spartan' !important;"
-      >Crée par Moustique et Trobibot</p>
-      <p
-        class="white--text body-2 ma-0"
-        style="font-family:'Spartan' !important;"
-      >{{displayUserStatus}}</p>
+      <p class="white--text body-2 ma-0" style="font-family:'Spartan' !important;">
+        Crée par Moustique et Trobibot
+      </p>
+      <p class="white--text body-2 ma-0" style="font-family:'Spartan' !important;">
+        {{ displayUserStatus }}
+      </p>
     </v-footer>
   </v-app>
 </template>
 
 <script>
-import { mapActions, mapGetters } from 'vuex';
-import axios from 'axios';
+import { mapGetters, mapActions } from 'vuex';
 
 export default {
   data() {
     return {
-      errors: [],
-      dialog: false,
-      valid: false,
-      snackbar: false,
       timeout: 2000,
-      text: 'Connexion réussie',
-      user: {
-        login: '',
-        password: '',
-      },
+      errors: [],
     };
   },
   methods: {
     ...mapActions({
-      updateInfosUser: 'updateInfosUser',
+      updateSnackBar: 'updateSnackBar',
     }),
-    async validate() {
-      const validateForm = this.$refs.form.validate();
-      if (validateForm) {
-        const { user } = this;
-
-        try {
-          const response = await axios.post(
-            'http://localhost:3000/users/connect',
-            {
-              login: user.login,
-              password: user.password,
-            },
-          );
-
-          const responseData = response.data;
-
-          const result = {
-            isConnected: false,
-            isAdmin: false,
-          };
-
-          if (responseData.login) {
-            result.isConnected = await true;
-          }
-
-          if (responseData.is_admin) {
-            result.isAdmin = await true;
-          }
-
-          this.dialog = false;
-          this.snackbar = true;
-
-          await this.updateInfosUser(result);
-        } catch (error) {
-          console.error(error);
-        }
-      }
-    },
   },
   computed: {
     ...mapGetters({
       stateUser: 'stateUser',
+      snackbar: 'snackbar',
     }),
+    snack: {
+      get() {
+        return this.snackbar.snackbar;
+      },
+      set(value) {
+        this.updateSnackBar({
+          snackbar: value,
+          text: '',
+          color: '',
+        });
+      },
+    },
     displayUserStatus() {
       const status = this.stateUser;
       if (status.isAdmin && status.isConnected) {

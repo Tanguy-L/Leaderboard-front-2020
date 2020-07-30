@@ -2,7 +2,7 @@
   <v-col cols="12">
     <v-row>
       <v-col cols="12">
-        <Podium />
+        <Podium :teams="teamsWithScore" />
       </v-col>
     </v-row>
     <v-divider />
@@ -10,7 +10,9 @@
       <v-col cols="12">
         <v-row>
           <v-col cols="12">
-            <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Les matchs à jouer</h2>
+            <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">
+              Les matchs à jouer
+            </h2>
           </v-col>
         </v-row>
         <v-row class="grid-layout pa-3">
@@ -22,7 +24,7 @@
             :games="games"
             :rules="rules"
           />
-          <add-game-card />
+          <add-game-card @update="fetchCall" :rules="rules" :games="games" />
         </v-row>
       </v-col>
     </v-row>
@@ -37,6 +39,7 @@
         <v-row class="grid-layout pa-3">
           <GameCard
             v-for="match in playedMatches"
+            @update="fetchCall"
             :key="match.id"
             :match="match"
             :teams="teams"
@@ -50,7 +53,10 @@
     <v-row>
       <v-col cols="10" offset="1">
         <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Qui qu'a perdu ?</h2>
-        <TableTournament :tournamentData="teamsScoreByGame" :tournamentHeaders="tournamentHeaders" />
+        <TableTournament
+          :tournamentData="teamsScoreByGame"
+          :tournamentHeaders="tournamentHeaders"
+        />
       </v-col>
     </v-row>
   </v-col>
@@ -83,6 +89,18 @@ export default {
     };
   },
   methods: {
+    fetchCall() {
+      this.teams = [];
+      this.games = [];
+      this.matchs = [];
+      this.rules = [];
+      this.fetchData().then(response => {
+        this.teams = response.teams;
+        this.games = response.games;
+        this.matchs = response.matchs;
+        this.rules = response.rules;
+      });
+    },
     async fetchData() {
       const api = await 'http://localhost:3000';
 
@@ -104,9 +122,7 @@ export default {
         const rules = resRules.data;
 
         const results = matchs.map(async match => {
-          const { data: scores } = await axios.get(
-            `${api}/matches/${match.id}/result`,
-          );
+          const { data: scores } = await axios.get(`${api}/matches/${match.id}/result`);
           return { ...match, score: scores };
         });
 
@@ -123,10 +139,68 @@ export default {
   },
   computed: {
     playedMatches() {
-      return this.matchs.filter(match => !!match.end_at);
+      return this.matchs.filter(match => {
+        let isWinner = false;
+
+        if (Array.isArray(match.score)) {
+          match.score.forEach(score => {
+            if (score && score.is_winner) {
+              isWinner = true;
+            }
+          });
+        }
+
+        if (isWinner) {
+          return true;
+        }
+        return false;
+      });
     },
     nonPlayedMatches() {
-      return this.matchs.filter(match => !match.end_at);
+      return this.matchs.filter(match => {
+        let isWinner = false;
+
+        if (Array.isArray(match.score)) {
+          match.score.forEach(score => {
+            if (score && score.is_winner) {
+              isWinner = true;
+            }
+          });
+        }
+
+        if (!isWinner) {
+          return true;
+        }
+        return false;
+      });
+    },
+    teamsWithScore() {
+      const { teams, matchs } = this;
+      const result = teams.map(team => {
+        const filteredByTeam = matchs.filter(match => {
+          if (match.score && match.score !== '') {
+            const find = match.score.some(score => score.team === team.id);
+            if (find) {
+              return true;
+            }
+          }
+          return false;
+        });
+
+        let scoreTeam = 0;
+
+        filteredByTeam.forEach(results => {
+          const score = results.score.find(resultTeam => resultTeam.team === team.id);
+          scoreTeam += score.score;
+        });
+
+        return {
+          team: team.name,
+          score: scoreTeam,
+          color: team.color,
+        };
+      });
+      return result;
     },
     teamsScoreByGame() {
       const { teams, games, matchs } = this;
@@ -193,12 +267,7 @@ export default {
     },
   },
   mounted() {
-    this.fetchData().then(response => {
-      this.teams = response.teams;
-      this.games = response.games;
-      this.matchs = response.matchs;
-      this.rules = response.rules;
-    });
+    this.fetchCall();
   },
 };
 </script>

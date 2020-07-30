@@ -16,15 +16,13 @@
 
       <!-- LINE TEAMS -->
       <v-row class="text-h5 mb-3" v-if="!!match.score">
-        <v-col
-          cols="5"
-          :style="{ color: getTeamData(match.score[0].team).color }"
-        >{{ getTeamData(match.score[0].team).name }}</v-col>
+        <v-col cols="5" :style="{ color: getTeamData(match.score[0].team).color }">{{
+          getTeamData(match.score[0].team).name
+        }}</v-col>
         <v-col cols="2" class="text-h5">VS</v-col>
-        <v-col
-          cols="5"
-          :style="{ color: getTeamData(match.score[1].team).color }"
-        >{{ getTeamData(match.score[1].team).name }}</v-col>
+        <v-col cols="5" :style="{ color: getTeamData(match.score[1].team).color }">{{
+          getTeamData(match.score[1].team).name
+        }}</v-col>
       </v-row>
     </v-img>
 
@@ -70,15 +68,6 @@
           ></v-checkbox>
         </v-col>
       </v-row>
-      <v-row>
-        <v-col cols="12">
-          <v-checkbox
-            v-model="form_matchEnded"
-            input-value="form_matchEnded"
-            label="Le match est fini"
-          ></v-checkbox>
-        </v-col>
-      </v-row>
     </v-form>
 
     <!-- MATCH SETTINGS MENU -->
@@ -93,8 +82,8 @@
             :items="games"
             item-text="name"
             item-value="id"
-            label="Game"
-            v-model="form_matchGame"
+            label="Jeux"
+            v-model="settings.matchGame"
           ></v-autocomplete>
         </v-col>
       </v-row>
@@ -104,20 +93,20 @@
             :items="mappedRules"
             item-text="name"
             item-value="id"
-            label="Rule"
-            v-model="form_matchRule"
+            label="Règles"
+            v-model="settings.matchRule"
           ></v-autocomplete>
         </v-col>
       </v-row>
       <v-row>
         <v-col cols="5">
-          <p>Debut du matche:</p>
+          <p>Début du match :</p>
         </v-col>
         <v-col cols="3">
-          <v-select :items="hours" label="HH" v-model="form_matchStartHour"></v-select>
+          <v-select :items="hours" label="HH" v-model="settings.matchStart.hour"></v-select>
         </v-col>
         <v-col cols="3">
-          <v-select :items="minutes" label="MM" v-model="form_matchStartMinute"></v-select>
+          <v-select :items="minutes" label="MM" v-model="settings.matchStart.minutes"></v-select>
         </v-col>
       </v-row>
     </v-form>
@@ -128,9 +117,9 @@
         <v-list-item v-if="!edit.isEdited">
           <v-list-item-content>
             <v-list-item-title>Commence à: {{ formatedDate(match.start_at) }}</v-list-item-title>
-            <v-list-item-subtitle>
-              W: {{ rules[match.rule].win }} | L: {{ rules[match.rule].lost }} | Eq:
-              {{ rules[match.rule].equality }}
+            <v-list-item-subtitle v-if="rules[match.rule]">
+              W: {{ ruleByMatch.win }} | L: {{ ruleByMatch.lost }} | Eq:
+              {{ ruleByMatch.equality }}
             </v-list-item-subtitle>
           </v-list-item-content>
         </v-list-item>
@@ -143,7 +132,7 @@
       </v-card-text>
 
       <!-- BUTTONS -->
-      <v-card-actions class="mr-2" v-if="amIAdmin">
+      <v-card-actions class="mr-2" v-if="stateUser.isAdmin">
         <div v-if="!edit.isEdited">
           <v-btn color="primary" icon>
             <v-icon @click.native="editMatch('participants')">mdi-scoreboard</v-icon>
@@ -170,6 +159,7 @@
 
 <script>
 import axios from 'axios';
+import { mapGetters, mapActions } from 'vuex';
 
 export default {
   props: {
@@ -195,18 +185,28 @@ export default {
       isEdited: false,
       menu: null,
     },
+    api: 'http://localhost:3000',
     form_firstTeam: '',
     form_firstTeamWins: '',
     form_secondTeam: '',
     form_secondTeamWins: '',
-    form_matchEnded: '',
-    form_matchGame: '',
-    form_matchRule: '',
-    form_matchStartHour: '',
-    form_matchStartMinute: '',
+    settings: {
+      matchGame: '',
+      matchStart: {
+        hour: '',
+        minutes: '',
+      },
+      matchRule: '',
+    },
   }),
   computed: {
-    amIAdmin: () => true,
+    ...mapGetters({
+      stateUser: 'stateUser',
+    }),
+    ruleByMatch() {
+      const { rules, match } = this;
+      return rules[match.rule - 1];
+    },
     mappedRules() {
       return this.rules.map(rule => ({
         name: `W:${rule.win} / L:${rule.lost} / Eq:${rule.equality}`,
@@ -224,6 +224,17 @@ export default {
     },
   },
   methods: {
+    ...mapActions({
+      updateSnack: 'updateSnackBar',
+    }),
+    async testError() {
+      try {
+        await axios.post('http://localhost:3000/matches/2/participants');
+      } catch (error) {
+        console.error(error);
+        this.showError(error);
+      }
+    },
     editMatch(menu = null) {
       this.edit.isEdited = !!menu;
       this.edit.menu = this.edit.isEdited ? menu : null;
@@ -241,48 +252,104 @@ export default {
           this.sendParticipantsForm();
           break;
         case 'settings':
-          // sendSettingsForm();
+          this.sendSettingsForm();
           break;
         case 'delete':
-          // sendDeleteForm();
+          this.sendDeleteForm();
           break;
         default:
           break;
       }
     },
+    async sendDeleteForm() {
+      const api = await 'http://localhost:3000';
+      const { match, participants } = this;
+      try {
+        const reqParticipants = participants.map(participant => {
+          return axios.delete(`${api}/matches/${match.id}/participants/${participant.team_id}`);
+        });
+
+        await Promise.all(reqParticipants);
+        await axios.delete(`${api}/matches/${match.id}`);
+        await this.confirmUpdate();
+      } catch (error) {
+        this.showError(error);
+        console.error(error);
+      }
+    },
+    async sendSettingsForm() {
+      const { settings, match } = this;
+      const api = await 'http://localhost:3000';
+
+      try {
+        await axios.put(`${api}/matches/${match.id}`, {
+          game: settings.matchGame,
+          rule: settings.matchRule,
+          start_at: settings.matchStart.hour,
+          end_at: settings.matchStart.minutes,
+        });
+        await this.$emit('update');
+      } catch (error) {
+        this.showError(error);
+        console.error(error);
+      }
+    },
+    async showError(error) {
+      await this.updateSnack({
+        snackbar: true,
+        text: error.message,
+        color: 'error darken-1',
+      });
+    },
+    async confirmUpdate() {
+      await this.updateSnack({
+        snackbar: true,
+        text: 'Match mis à jour !',
+        color: 'success darken-1',
+      });
+      await this.$emit('update');
+      await this.editMatch();
+    },
     async sendParticipantsForm() {
       const api = await 'http://localhost:3000';
-      const { match } = this;
+      const { match, participants } = this;
 
-      const { data: participants } = await axios.get(
-        `${api}/matches/${match.id}/participants`,
-      );
-
-      participants.forEach(async participant => {
-        await axios.delete(
-          `${api}/matches/${match.id}/participants/${participant.team_id}`,
-        );
+      const reqParticipants = participants.map(participant => {
+        return axios.delete(`${api}/matches/${match.id}/participants/${participant.team_id}`);
       });
+
+      await Promise.all(reqParticipants);
 
       const teamsBody = { teams: [this.form_firstTeam, this.form_secondTeam] };
       const winnersBody = { winners: [] };
-      if (this.form_firstTeamWins)
-        winnersBody.winners.push(this.form_firstTeam);
-      if (this.form_secondTeamWins)
-        winnersBody.winners.push(this.form_secondTeam);
+      if (this.form_firstTeamWins) winnersBody.winners.push(this.form_firstTeam);
+      if (this.form_secondTeamWins) winnersBody.winners.push(this.form_secondTeam);
 
-      await axios.post(`${api}/matches/${match.id}/participants`, teamsBody);
-      await axios.post(`${api}/matches/${match.id}/result`, winnersBody);
-      await axios.put(`${api}/matches/${match.id}`, {
-        start_at: match.start_at,
-        end_at: this.form_matchEnded ? Date.now() : null,
-        game: match.game,
-        rule: match.rule,
-      });
+      try {
+        await axios.post(`${api}/matches/${match.id}/participants`, teamsBody);
+        await axios.post(`${api}/matches/${match.id}/result`, winnersBody);
+        await axios.put(`${api}/matches/${match.id}`, {
+          start_at: match.start_at,
+          end_at: this.form_matchEnded ? Date.now() : null,
+          game: match.game,
+          rule: match.rule,
+        });
+        await this.confirmUpdate();
+      } catch (error) {
+        this.showError(error);
+        console.error(error);
+      }
     },
   },
   mounted() {
-    const { score, start_at: startAt, end_at: endAt, game, rule } = this.match;
+    const { api } = this;
+    const { score, start_at: startAt, end_at: endAt, game, rule, id } = this.match;
+    console.log(id);
+
+    axios.get(`${api}/matches/${id}/participants`).then(response => {
+      this.participants = response.data;
+    });
+
     if (!!score && !!score[0] && !!score[0].team) {
       this.form_firstTeam = score[0].team;
       this.form_firstTeamWins = score[0].is_winner;
@@ -292,11 +359,11 @@ export default {
       this.form_secondTeamWins = score[1].is_winner;
     }
     const startDate = new Date(startAt);
-    this.form_matchStartHour = startDate.getHours();
-    this.form_matchStartMinute = startDate.getMinutes();
+    this.settings.matchStart.hour = startDate.getHours();
+    this.settings.matchStart.minutes = startDate.getMinutes();
     this.form_matchEnded = endAt;
-    this.form_matchGame = game;
-    this.form_matchRule = rule;
+    this.settings.matchGame = game;
+    this.settings.matchRule = rule;
   },
 };
 </script>
