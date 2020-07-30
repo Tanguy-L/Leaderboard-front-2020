@@ -16,13 +16,15 @@
 
       <!-- LINE TEAMS -->
       <v-row class="text-h5 mb-3" v-if="!!match.score">
-        <v-col cols="5" :style="{ color: getTeamData(match.score[0].team).color }">{{
-          getTeamData(match.score[0].team).name
-        }}</v-col>
+        <v-col
+          cols="5"
+          :style="{ color: getTeamData(match.score[0].team).color }"
+        >{{ getTeamData(match.score[0].team).name }}</v-col>
         <v-col cols="2" class="text-h5">VS</v-col>
-        <v-col cols="5" :style="{ color: getTeamData(match.score[1].team).color }">{{
-          getTeamData(match.score[1].team).name
-        }}</v-col>
+        <v-col
+          cols="5"
+          :style="{ color: getTeamData(match.score[1].team).color }"
+        >{{ getTeamData(match.score[1].team).name }}</v-col>
       </v-row>
     </v-img>
 
@@ -32,42 +34,36 @@
       class="pa-4"
       v-else-if="edit.menu == 'participants'"
     >
-      <v-row>
-        <v-col cols="7">
-          <v-autocomplete
-            :items="teams"
-            item-text="name"
-            item-value="id"
-            label="Equipe 1"
-            v-model="form_firstTeam"
-          ></v-autocomplete>
-        </v-col>
-        <v-col cols="4">
-          <v-checkbox
-            v-model="form_firstTeamWins"
-            input-value="form_firstTeamWins"
-            label="A  gagné"
-          ></v-checkbox>
-        </v-col>
-      </v-row>
-      <v-row>
-        <v-col cols="7">
-          <v-autocomplete
-            :items="teams"
-            item-text="name"
-            item-value="id"
-            label="Equipe 2"
-            v-model="form_secondTeam"
-          ></v-autocomplete>
-        </v-col>
-        <v-col cols="4">
-          <v-checkbox
-            v-model="form_secondTeamWins"
-            input-value="form_secondTeamWins"
-            label="A gagné"
-          ></v-checkbox>
-        </v-col>
-      </v-row>
+      <!-- DYNAMIC FORM  -->
+
+      <div class="d-flex">
+        <div>
+          <v-btn color="primary" icon>
+            <v-icon @click="updateTeamForm('add')">mdi-plus-circle-outline</v-icon>
+          </v-btn>
+          <v-btn color="primary" icon>
+            <v-icon @click="updateTeamForm('remove')">mdi-minus-circle-outline</v-icon>
+          </v-btn>
+        </div>
+        <div class="flex-grow-1">
+          <div class="d-flex px-4 mt-3 align-center" v-for="team in formTeams" :key="team.id">
+            <v-autocomplete
+              :items="teams"
+              item-text="name"
+              hide-details
+              item-value="id"
+              :label="findTeamById(team.idTeam)"
+              v-model="team.idTeam"
+            ></v-autocomplete>
+            <v-checkbox
+              hide-details
+              v-model="team.isWinner"
+              :input-value="team.isWinner"
+              label="A gagné"
+            ></v-checkbox>
+          </div>
+        </div>
+      </div>
     </v-form>
 
     <!-- MATCH SETTINGS MENU -->
@@ -190,6 +186,15 @@ export default {
     form_firstTeamWins: '',
     form_secondTeam: '',
     form_secondTeamWins: '',
+    participants: [],
+    formTeams: [
+      {
+        id: 0,
+      },
+      {
+        id: 1,
+      },
+    ],
     settings: {
       matchGame: '',
       matchStart: {
@@ -203,12 +208,18 @@ export default {
     ...mapGetters({
       stateUser: 'stateUser',
     }),
+    teamLeftForSelect() {
+      // eslint-disable-next-line camelcase
+      const { form_firstTeam, teams } = this;
+      // eslint-disable-next-line camelcase
+      return teams.filter((team) => team.id !== form_firstTeam);
+    },
     ruleByMatch() {
       const { rules, match } = this;
       return rules[match.rule - 1];
     },
     mappedRules() {
-      return this.rules.map(rule => ({
+      return this.rules.map((rule) => ({
         name: `W:${rule.win} / L:${rule.lost} / Eq:${rule.equality}`,
         ...rule,
       }));
@@ -220,13 +231,33 @@ export default {
       return [...Array(60).keys()];
     },
     gameImage() {
-      return this.games.find(game => game.id === this.match.game).image;
+      return this.games.find((game) => game.id === this.match.game).image;
     },
   },
   methods: {
     ...mapActions({
       updateSnack: 'updateSnackBar',
     }),
+    updateTeamForm(operator) {
+      const { formTeams } = this;
+      if (operator === 'add') {
+        this.formTeams.push({
+          id: formTeams.length,
+        });
+      }
+
+      if (operator === 'remove') {
+        this.formTeams.pop();
+      }
+    },
+    findTeamById(id) {
+      const { teams } = this;
+      const result = teams.find((e) => e.id === id);
+      if (result) {
+        return result.name;
+      }
+      return '';
+    },
     async testError() {
       try {
         await axios.post('http://localhost:3000/matches/2/participants');
@@ -244,7 +275,7 @@ export default {
       return `${d.getHours()}:${d.getMinutes()}`;
     },
     getTeamData(teamId) {
-      return this.teams.find(team => team.id === teamId);
+      return this.teams.find((team) => team.id === teamId);
     },
     sendForm() {
       switch (this.edit.menu) {
@@ -265,11 +296,16 @@ export default {
       const api = await 'http://localhost:3000';
       const { match, participants } = this;
       try {
-        const reqParticipants = participants.map(participant => {
-          return axios.delete(`${api}/matches/${match.id}/participants/${participant.team_id}`);
-        });
+        if (participants && participants.length) {
+          const reqParticipants = participants.map((participant) => {
+            return axios.delete(
+              `${api}/matches/${match.id}/participants/${participant.team_id}`,
+            );
+          });
 
-        await Promise.all(reqParticipants);
+          await Promise.all(reqParticipants);
+        }
+
         await axios.delete(`${api}/matches/${match.id}`);
         await this.confirmUpdate();
       } catch (error) {
@@ -312,21 +348,29 @@ export default {
     },
     async sendParticipantsForm() {
       const api = await 'http://localhost:3000';
-      const { match, participants } = this;
+      const { match, participants, formTeams } = this;
 
-      const reqParticipants = participants.map(participant => {
-        return axios.delete(`${api}/matches/${match.id}/participants/${participant.team_id}`);
+      const reqParticipants = participants.map((participant) => {
+        return axios.delete(
+          `${api}/matches/${match.id}/participants/${participant.team_id}`,
+        );
       });
 
       await Promise.all(reqParticipants);
 
-      const teamsBody = { teams: [this.form_firstTeam, this.form_secondTeam] };
+      const teamsBody = formTeams.map((team) => team.idTeam);
       const winnersBody = { winners: [] };
-      if (this.form_firstTeamWins) winnersBody.winners.push(this.form_firstTeam);
-      if (this.form_secondTeamWins) winnersBody.winners.push(this.form_secondTeam);
+
+      formTeams.forEach((team) => {
+        if (team.isWinner) {
+          winnersBody.winners.push(team.id);
+        }
+      });
 
       try {
-        await axios.post(`${api}/matches/${match.id}/participants`, teamsBody);
+        await axios.post(`${api}/matches/${match.id}/participants`, {
+          teams: teamsBody,
+        });
         await axios.post(`${api}/matches/${match.id}/result`, winnersBody);
         await axios.put(`${api}/matches/${match.id}`, {
           start_at: match.start_at,
@@ -343,21 +387,28 @@ export default {
   },
   mounted() {
     const { api } = this;
-    const { score, start_at: startAt, end_at: endAt, game, rule, id } = this.match;
-    console.log(id);
+    const { start_at: startAt, end_at: endAt, game, rule, id } = this.match;
 
-    axios.get(`${api}/matches/${id}/participants`).then(response => {
-      this.participants = response.data;
+    const self = this;
+
+    axios.get(`${api}/matches/${id}/participants`).then((response) => {
+      self.participants = response.data;
+      if (Array.isArray(response.data)) {
+        response.data.forEach((participant, index) => {
+          if (!self.formTeams[index]) {
+            console.log(self.formTeams);
+            self.formTeams.push({
+              id: index,
+              idTeam: participant.team_id,
+              isWinner: participant.is_winner,
+            });
+          }
+          self.formTeams[index].idTeam = participant.team_id;
+          self.formTeams[index].isWinner = participant.is_winner;
+        });
+      }
     });
 
-    if (!!score && !!score[0] && !!score[0].team) {
-      this.form_firstTeam = score[0].team;
-      this.form_firstTeamWins = score[0].is_winner;
-    }
-    if (!!score && !!score[1] && !!score[1].team) {
-      this.form_secondTeam = score[1].team;
-      this.form_secondTeamWins = score[1].is_winner;
-    }
     const startDate = new Date(startAt);
     this.settings.matchStart.hour = startDate.getHours();
     this.settings.matchStart.minutes = startDate.getMinutes();

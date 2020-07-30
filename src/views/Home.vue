@@ -10,9 +10,7 @@
       <v-col cols="12">
         <v-row>
           <v-col cols="12">
-            <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">
-              Les matchs à jouer
-            </h2>
+            <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Les matchs à jouer</h2>
           </v-col>
         </v-row>
         <v-row class="grid-layout pa-3">
@@ -37,6 +35,7 @@
           </v-col>
         </v-row>
         <v-row class="grid-layout pa-3">
+          {{ playedMatches.length }}
           <GameCard
             v-for="match in playedMatches"
             @update="fetchCall"
@@ -53,10 +52,7 @@
     <v-row>
       <v-col cols="10" offset="1">
         <h2 class="text-h3 mb-6" style="font-family:'Spartan' !important;">Qui qu'a perdu ?</h2>
-        <TableTournament
-          :tournamentData="teamsScoreByGame"
-          :tournamentHeaders="tournamentHeaders"
-        />
+        <TableTournament :tournamentData="teamsScoreByGame" :tournamentHeaders="tournamentHeaders" />
       </v-col>
     </v-row>
   </v-col>
@@ -94,7 +90,7 @@ export default {
       this.games = [];
       this.matchs = [];
       this.rules = [];
-      this.fetchData().then(response => {
+      this.fetchData().then((response) => {
         this.teams = response.teams;
         this.games = response.games;
         this.matchs = response.matchs;
@@ -121,8 +117,10 @@ export default {
         const matchs = resMatchs.data;
         const rules = resRules.data;
 
-        const results = matchs.map(async match => {
-          const { data: scores } = await axios.get(`${api}/matches/${match.id}/result`);
+        const results = matchs.map(async (match) => {
+          const { data: scores } = await axios.get(
+            `${api}/matches/${match.id}/result`,
+          );
           return { ...match, score: scores };
         });
 
@@ -139,11 +137,11 @@ export default {
   },
   computed: {
     playedMatches() {
-      return this.matchs.filter(match => {
+      return this.matchs.filter((match) => {
         let isWinner = false;
 
         if (Array.isArray(match.score)) {
-          match.score.forEach(score => {
+          match.score.forEach((score) => {
             if (score && score.is_winner) {
               isWinner = true;
             }
@@ -157,11 +155,11 @@ export default {
       });
     },
     nonPlayedMatches() {
-      return this.matchs.filter(match => {
+      return this.matchs.filter((match) => {
         let isWinner = false;
 
         if (Array.isArray(match.score)) {
-          match.score.forEach(score => {
+          match.score.forEach((score) => {
             if (score && score.is_winner) {
               isWinner = true;
             }
@@ -176,10 +174,10 @@ export default {
     },
     teamsWithScore() {
       const { teams, matchs } = this;
-      const result = teams.map(team => {
-        const filteredByTeam = matchs.filter(match => {
+      const result = teams.map((team) => {
+        const filteredByTeam = matchs.filter((match) => {
           if (match.score && match.score !== '') {
-            const find = match.score.some(score => score.team === team.id);
+            const find = match.score.some((score) => score.team === team.id);
             if (find) {
               return true;
             }
@@ -189,8 +187,10 @@ export default {
 
         let scoreTeam = 0;
 
-        filteredByTeam.forEach(results => {
-          const score = results.score.find(resultTeam => resultTeam.team === team.id);
+        filteredByTeam.forEach((results) => {
+          const score = results.score.find(
+            (resultTeam) => resultTeam.team === team.id,
+          );
           scoreTeam += score.score;
         });
 
@@ -205,13 +205,13 @@ export default {
     teamsScoreByGame() {
       const { teams, games, matchs } = this;
 
-      const test = teams.map(team => {
-        const test2 = games.map(game => {
-          const matchForThisGame = matchs.filter(e => e.game === game.id);
+      const test = teams.map((team) => {
+        const test2 = games.map((game) => {
+          const matchForThisGame = matchs.filter((e) => e.game === game.id);
 
-          const filteredByTeam = matchForThisGame.filter(e => {
+          const filteredByTeam = matchForThisGame.filter((e) => {
             if (e.score && e.score !== '') {
-              const find = e.score.some(score => score.team === team.id);
+              const find = e.score.some((score) => score.team === team.id);
               if (find) {
                 return true;
               }
@@ -221,8 +221,10 @@ export default {
 
           let scoreTeam = 0;
 
-          filteredByTeam.forEach(results => {
-            const score = results.score.find(result => result.team === team.id);
+          filteredByTeam.forEach((results) => {
+            const score = results.score.find(
+              (result) => result.team === team.id,
+            );
             scoreTeam += score.score;
           });
 
@@ -236,7 +238,7 @@ export default {
           team: team.name,
         };
 
-        test2.forEach(game => {
+        test2.forEach((game) => {
           result[game.key] = game.value;
         });
 
@@ -247,7 +249,7 @@ export default {
     },
     tournamentHeaders() {
       const { games } = this;
-      const matchsParsed = games.map(game => {
+      const matchsParsed = games.map((game) => {
         return {
           text: game.name,
           value: game.name,

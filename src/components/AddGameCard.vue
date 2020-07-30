@@ -2,7 +2,7 @@
   <v-card class="game-card--wrapper">
     <v-row class="d-flex flex-column justify-center">
       <h3 class="primary--text mt-4" @click="expand = !expand">Ajouter un match</h3>
-      <v-form class="pa-2 mt-4 px-6 form-width ma-auto" v-model="valid">
+      <v-form ref="form" class="pa-2 mt-4 px-6 form-width ma-auto" v-model="valid">
         <v-autocomplete
           :items="mappedRules"
           item-text="name"
@@ -21,9 +21,7 @@
           :rules="dumbRules"
         ></v-autocomplete>
 
-        <v-btn color="success darken-1" class="mr-4" :disabled="!valid" @click="submit"
-          >Valider</v-btn
-        >
+        <v-btn color="success darken-1" class="mr-4" :disabled="!valid" @click="submit">Valider</v-btn>
       </v-form>
     </v-row>
   </v-card>
@@ -51,11 +49,11 @@ export default {
     matchGame: '',
     matchHour: '',
     matchMinutes: '',
-    dumbRules: [v => !!v || v === 0 || 'Ce champs est requis'],
+    dumbRules: [(v) => !!v || v === 0 || 'Ce champs est requis'],
   }),
   computed: {
     mappedRules() {
-      return this.rules.map(rule => ({
+      return this.rules.map((rule) => ({
         name: `W:${rule.win} / L:${rule.lost} / Eq:${rule.equality}`,
         ...rule,
       }));
